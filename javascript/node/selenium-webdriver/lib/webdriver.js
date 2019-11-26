@@ -434,7 +434,7 @@ class IWebDriver {
    *     evaluate as a condition.
    * @param {number=} timeout The duration in milliseconds, how long to wait
    *     for the condition to be true.
-   * @param {string=} message An optional message to use if the wait times out.
+   * @param {(string|Function)=} message An optional message to use if the wait times out.
    * @param {number=} pollTimeout The duration in milliseconds, how long to
    *     wait between polling the condition.
    * @return {!(IThenable<T>|WebElementPromise)} A promise that will be
@@ -786,11 +786,8 @@ class WebDriver {
         let start = Date.now();
         let timer = setTimeout(function() {
           timer = null;
-          reject(
-              new error.TimeoutError(
-                  (message ? `${message}\n` : '')
-                      + 'Timed out waiting for promise to resolve after '
-                      + (Date.now() - start) + 'ms'));
+          let timeoutMessage = message ? `${typeof message === 'function' ? message() : message}\n` : '';
+          reject(new error.TimeoutError(`${timeoutMessage}Timed out waiting for promise to resolve after ${Date.now() - start}ms`));
         }, timeout);
         const clearTimer = () => timer && clearTimeout(timer);
 
@@ -837,10 +834,8 @@ class WebDriver {
           if (!!value) {
             resolve(value);
           } else if (timeout && elapsed >= timeout) {
-            reject(
-                new error.TimeoutError(
-                  (message ? `${message}\n` : '')
-                        + `Wait timed out after ${elapsed}ms`));
+            let timeoutMessage = message ? `${typeof message === 'function' ? message() : message}\n` : '';
+            reject(new error.TimeoutError(`${timeoutMessage}Wait timed out after ${elapsed}ms`));
           } else {
             setTimeout(pollCondition, pollTimeout);
           }

@@ -1040,6 +1040,27 @@ describe('WebDriver', function() {
           .then(fail, assertIsStubError);
     });
 
+    it('supports message function if condition exceeds timeout', function() {
+      let executor = new FakeExecutor();
+      let driver = executor.createDriver();
+      let message = () => 'goes boom';
+      return driver.wait(() => false, 0.001, message)
+        .then(fail, (e) => {
+          assert.ok(/^goes boom\nWait timed out after \d+ms$/.test(e.message));
+        })
+    });
+
+    it('supports message function if condition returns a rejected promise', function() {
+      let executor = new FakeExecutor();
+      let driver = executor.createDriver();
+      let condition = new Promise((res) => setTimeout(res, 100));
+      let message = () => 'goes boom';
+      return driver.wait(condition, 1, message)
+        .then(fail, (e) => {
+          assert.ok(/^goes boom\nTimed out waiting for promise to resolve after \d+ms$/.test(e.message));
+        });
+    });
+
     it('waits forever on a zero timeout', function() {
       let done = false;
       setTimeout(() => done = true, 150);
